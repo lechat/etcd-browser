@@ -1,7 +1,7 @@
 
 var app = angular.module("app", ["xeditable","ngCookies"]);
 
-app.controller('NodeCtrl', ['$scope','$http','$cookies', function($scope,$http,$cookies) {
+app.controller('NodeCtrl', ['$scope','$http','$cookies','$q', function($scope,$http,$cookies,$q) {
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
@@ -99,6 +99,50 @@ app.controller('NodeCtrl', ['$scope','$http','$cookies', function($scope,$http,$
       $scope.loadNode(node);
     }).
     error(errorHandler);
+  }
+    
+  $scope.renameNode = function(node,keyName){
+    var newkey = node.key.slice(0, node.key.lastIndexOf('/')+1) + keyName;
+    if (newkey == node.key) {
+       return;
+    }
+    var d = $q.defer();
+    var reject = function(e) {
+      d.reject('Server Error');
+    }
+    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+      success(function(data) {
+        if (data.node.value != node.value) {
+          d.resolve('The value has changed by someone else');
+          return
+        }  
+        $http({method: 'PUT',
+               url: $scope.getPrefix() + keyPrefix + newkey,
+               params: {"value": node.value}}).
+          success(function(data) {
+            $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+              success(function(data) {
+                if (data.node.value != node.value) {
+                  $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + newkey}).
+                    success(function(data) {
+                      d.resolve('The value has changed by someone else');
+                    }).
+                    error(reject);
+                } else {
+                  $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + node.key}).
+                    success(function(data) {
+                      $scope.loadNode(node.parent);
+                      d.resolve();
+                    }).
+                    error(reject);
+                }
+              }).
+              error(reject);
+          }).
+          error(reject);
+      }).
+      error(reject);
+    return d.promise;
   }
 
   $scope.deleteNode = function(node){

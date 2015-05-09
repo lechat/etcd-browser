@@ -33,7 +33,7 @@
         </button>
       </td>
       <td style="text-align:left;font-weight:bold;padding: 5px 4px;">
-        <span>{{node.name}}:</span>
+        <span class="name" editable-text="node.name" onbeforesave="renameNode(node,$data)">{{node.name}}:</span>
       </td>
       <td style="padding-right: 5px;">
         <span class="value" editable-textarea="node.value" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
