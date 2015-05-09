@@ -81,7 +81,17 @@ app.controller('NodeCtrl', ['$scope','$http','$cookies', function($scope,$http,$
     error(errorHandler);
   }
 
+  $scope.checkboxModel = {
+    use_json_validation : false
+  };
   $scope.updateNode = function(node,value){
+    if ($scope.checkboxModel.use_json_validation) {
+      try {
+        JSON.parse(value);
+      } catch (err) {
+        return 'Not a json';
+      }
+    }
     $http({method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + node.key,
       params: {"value": value}}).
