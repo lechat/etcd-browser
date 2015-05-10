@@ -1,19 +1,18 @@
 
-var app = angular.module("app", ["xeditable","ngCookies"]);
+var app = angular.module("app", ["xeditable"]);
 
-app.controller('NodeCtrl', ['$scope','$http','$cookies','$q', function($scope,$http,$cookies,$q) {
+app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$http,$location,$q) {
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
-  if($cookies.urlPrefix){
-    $scope.urlPrefix = $cookies.urlPrefix;
-  } else {
-    $scope.urlPrefix = "http://" + document.location.host;
-  }
+  $scope.urlPrefix = $location.search().etcd || $location.protocol() + "://" + document.location.host;
 
   $scope.getPrefix = function() {
-    splitted = $scope.urlPrefix.split("/")
-    return splitted[0] + "//" + splitted[2]
+    if ($scope.urlPrefix) {
+      var splitted = $scope.urlPrefix.split("/");
+      return splitted[0] + "//" + splitted[2]
+    }
+    return ''
   }
 
 
@@ -61,8 +60,11 @@ app.controller('NodeCtrl', ['$scope','$http','$cookies','$q', function($scope,$h
     }
   }
   $scope.submit = function(){
-    console.log($cookies);
-    $cookies.urlPrefix = $scope.getPrefix();
+    var splitted = $scope.urlPrefix.split("/");
+    var etcd = splitted[0] + "//" + splitted[2];
+    if (etcd !== $location.protocol() + "://" + document.location.host === !$location.search().etcd) {
+      $location.search('etcd', etcd);
+    }
     $scope.root = {key:'/'};
     delete $scope.activeNode;
     $scope.loadNode($scope.root);
