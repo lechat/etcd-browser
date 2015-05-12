@@ -1,5 +1,5 @@
 
-var app = angular.module("app", ["xeditable"]);
+var app = angular.module("app", ["xeditable", "mc.resizer"]);
 
 app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$http,$location,$q) {
   var keyPrefix = '/v2/keys',

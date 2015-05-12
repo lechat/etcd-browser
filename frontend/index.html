@@ -14,32 +14,35 @@
 
 <link href="angular-xeditable/css/xeditable.css" rel="stylesheet">
 <script src="angular-xeditable/js/xeditable.js"></script>
+<script src="resize.js"></script>
 <link rel="stylesheet" href="main.css">
 <script src="etcdbrowser.js"></script>
 </head>
 <body>
-<script type="text/ng-template" id="prop-block">
-  <button type="button" class="btn btn-default btn-xs" ng-click="addNode(activeNode)" title="Add Property">
-    Add Property
-  </button>
-  <table class="property-table">
-    <tr ng-repeat="node in activeNode.nodes | orderBy:'name'" ng-if="!node.dir" ng-class-odd="'odd-row'">
-      <td>
-        <button type="button" class="btn btn-default btn-xs" ng-click="copyNode(node)" title="Copy Node">
-          <span class="glyphicon glyphicon-floppy-open"></span>
-        </button>
-        <button type="button" class="btn btn-default btn-xs" ng-click="deleteNode(node)" title="Delete Node">
-          <span class="glyphicon glyphicon-trash"></span>
-        </button>
-      </td>
-      <td style="text-align:left;font-weight:bold;padding: 5px 4px;">
-        <span class="name" editable-text="node.name" onbeforesave="renameNode(node,$data)">{{node.name}}:</span>
-      </td>
-      <td style="padding-right: 5px;">
-        <span class="value" editable-textarea="node.value" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
-      </td>
-    </tr>
-  </table>
+  <script type="text/ng-template" id="prop-block">
+    <div class="properties-padding">
+      <button type="button" class="btn btn-default btn-xs" ng-click="addNode(activeNode)" title="Add Property">
+        Add Property
+      </button>
+      <table class="property-table">
+        <tr ng-repeat="node in activeNode.nodes | orderBy:'name'" ng-if="!node.dir" ng-class-odd="'odd-row'">
+          <td>
+            <button type="button" class="btn btn-default btn-xs" ng-click="copyNode(node)" title="Copy Node">
+              <span class="glyphicon glyphicon-floppy-open"></span>
+            </button>
+            <button type="button" class="btn btn-default btn-xs" ng-click="deleteNode(node)" title="Delete Node">
+              <span class="glyphicon glyphicon-trash"></span>
+            </button>
+          </td>
+          <td style="text-align:left;font-weight:bold;padding: 5px 4px;">
+            <span class="name" editable-text="node.name" onbeforesave="renameNode(node,$data)">{{node.name}}:</span>
+          </td>
+          <td style="padding-right: 5px;">
+            <span class="value" editable-textarea="node.value" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
+          </td>
+        </tr>
+      </table>
+    </div>
 </script>
 <script type="text/ng-template" id="tree-item">
   <span ng-click="toggleNode(node)" class="glyphicon glyphicon-minus toggle-icon" ng-if="node.open"></span>
@@ -80,7 +83,7 @@
     </div>
     <div ng-if="error" class="alert alert-danger alert-dismissible" role="alert">{{error}}</div>
     <div class="row top-buffer">
-      <div class="col-md-6">
+      <div id="navigation">
         <div class="tree prop-block" >
           <ul>
             <li>
@@ -98,7 +101,9 @@
           </ul>
         </div>
       </div>
-      <div class="col-md-6">
+      <div id="resizer" resizer="vertical" resizer-width="6" resizer-left="#navigation" resizer-max="800">
+      <div id="resize-bars"></div>
+      <div id="properties">
         <div class="prop-block" ng-include="'prop-block'" ng-if="activeNode"></div>
       </div>
     </div>

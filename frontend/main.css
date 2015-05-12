@@ -128,3 +128,28 @@ html, body {
 td {
   white-space: nowrap;
 }
+
+#navigation {
+    float: left;
+    overflow: auto;
+    width: 40%
+}
+#properties {
+    overflow: hidden;
+}
+#resize-bars {
+    float:left;
+    margin:20px 3px 0px 3px;
+    width:4px;
+    border-color: silver;
+    border-width: 1px;
+    border-right-style: solid;
+    border-left-style: solid;
+    border-top-stype: none;
+    border-bottom-style: none;
+    height:20px;
+}
+
+.properties-padding {
+    padding: 20px 5px 20px 5px;
+}
