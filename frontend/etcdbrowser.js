@@ -102,7 +102,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     }).
     error(errorHandler);
   }
-    
+
   $scope.renameNode = function(node,keyName){
     var newkey = node.key.slice(0, node.key.lastIndexOf('/')+1) + keyName;
     if (newkey == node.key) {
@@ -117,7 +117,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
         if (data.node.value != node.value) {
           d.resolve('The value has changed by someone else');
           return
-        }  
+        }
         $http({method: 'PUT',
                url: $scope.getPrefix() + keyPrefix + newkey,
                params: {"value": node.value}}).
