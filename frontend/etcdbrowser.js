@@ -93,7 +93,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   }
 
   $scope.checkboxModel = {
-    use_json_validation : false
+    use_json_validation : true
   };
   $scope.updateNode = function(node,value){
     if ($scope.checkboxModel.use_json_validation) {
