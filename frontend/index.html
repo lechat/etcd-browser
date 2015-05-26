@@ -77,9 +77,44 @@
 		      </div>
 		    </form>
 	    </div>
-      <div class="col-md-3" style="margin-top:8px">
+      <div class="col-md-2" style="margin-top:8px">
         <input type="checkbox" ng-model="checkboxModel.use_json_validation"><span style="padding-left:5px">validate values to JSON format</span></input>
       </div>
+      <div class="col-md-4" style="margin-top:8px" ng-switch on="confed.state">
+        <div ng-switch-when="confed">
+          Conf-Editor
+          <button ng-click="confedBeginEdit()" class="btn btn-default btn-xs" type="button" title="Begin edit">Begin edit</button>
+
+          <button ng-if="!confed.changelog" ng-click="confedShowChangelog()" class="btn btn-default btn-xs" type="button" title="Show changelog">Show changelog</button>
+          <button ng-if="confed.changelog" ng-click="confedHideChangelog()" class="btn btn-default btn-xs" type="button" title="Hide changelog">Hide changelog</button>
+        </div>
+        <div ng-switch-when="login">
+          Login
+          <form name="confed_form">
+            <input type="text" width="40" ng-model="confed.username" placeholder="Username"/>
+            <input type="password" ng-model="confed.password" placeholder="Password" ng-enter="confedLogin()"/>
+            <button ng-click="confedLogin()" class="btn btn-default btn-xs" type="button" title="Login">Login</button>
+          </form>
+        </div>
+        <div ng-switch-when="editing">
+          Editing
+          <input type="text" ng-model="confed.commitmsg" placeholder="Commit message"/>
+          <button ng-click="confedCommit()" class="btn btn-default btn-xs" type="button" title="Commit">Commit</button>
+          <button ng-click="confedAbort()" class="btn btn-default btn-xs" type="button" title="Commit">Abort</button>
+        </div>
+      </div>
+    </div>
+    <div ng-if="confed.changelog" class="changelog">
+      <ul style="margin-bottom:0px">
+        <li ng-repeat="changeset in confed.changelog | orderBy:'time'">{{changeset.time | date:'yyyy-MM-dd HH:mm:ss Z' }} {{changeset.author}} - {{changeset.message}}
+          <span ng-if="!changeset.show"><a href="" ng-click="changeset.show=true" >+</a></span>
+          <span ng-if="changeset.show"><a href="" ng-click="changeset.show=false" >-</a>
+          <ul>
+            <li ng-repeat="ch in changeset.changes">{{ ch.action }} {{ ch.node.key }} = {{ ch.node.value }}</li>
+          </ul>
+          </span>
+        </li>
+      </ul>
     </div>
     <div ng-if="error" class="alert alert-danger alert-dismissible" role="alert">{{error}}</div>
     <div class="row top-buffer">

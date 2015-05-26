@@ -39,7 +39,16 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
       success(function(data) {
         prepNodes(data.node.nodes,node);
         node.nodes = data.node.nodes;
-        $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key
+        $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key;
+        if (node.key === "/") {
+          $http({method: 'GET', url: $scope.getPrefix() + "/version"}).
+            success(function(data) {
+               if (data.indexOf("confed") != -1 && $scope.confed.state === null) {
+                   $scope.confed.state = "confed";
+               }
+            }).
+            error(errorHandler);
+        }
       }).
       error(errorHandler);
   }
@@ -254,7 +263,119 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     error(errorHandler);
   }
 
+  $scope.confedBeginEdit = function(){
+      $http({method: 'POST', url: $scope.getPrefix() + "/changesets/", withCredentials: true}).
+      success(function(data, status, headers, config) {
+          var splitted = $scope.urlPrefix.split("/");
+          $scope.confed.url = splitted[0] + "//" + splitted[2];
+          $scope.confed.changeset = headers('Location').split('/')[2];
+          $scope.confed.state = 'editing';
+          $scope.urlPrefix = $scope.urlPrefix.replace('://', '://' + $scope.confed.changeset + '.');
+          $scope.submit();
+      }).
+      error(function(data, status, headers, config){
+          if (status === 403) {
+              $scope.confed.state = 'login';
+              $scope.confed.login_callback = $scope.confedBeginEdit;
+          } else {
+              return errorHandler(data, status, headers, config);
+          }
+      });      
+  }
+
+  $scope.confed = {
+      state: null,
+      username: localStorage.getItem('username'),
+      password: null,
+      url: null,
+      changeset: null,
+      commitmsg: null,
+      login_callback:null
+  };
+
+  $scope.confedLogin = function(){
+      $http({method: 'POST', url: $scope.getPrefix() + "/login", 
+             headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+             withCredentials: true,
+             data: 'username=' + encodeURIComponent($scope.confed.username) + '&password='+ encodeURIComponent($scope.confed.password)}).
+      success(function(data) {
+          localStorage.setItem('username', $scope.confed.username);
+          $scope.confed.password = null;
+          if ($scope.confed.login_callback) {
+              $scope.confed.login_callback();
+          } else {
+              $scope.confed.state = 'confed';
+          }
+      }).
+      error(errorHandler);
+  }
+
+  $scope.confedCommit = function(){
+      $http({method: 'POST', url: $scope.confed.url + "/changesets/" + $scope.confed.changeset, 
+             headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+             withCredentials: true,
+             data: 'author=' + encodeURIComponent($scope.confed.username) + '&message='+ encodeURIComponent($scope.confed.commitmsg)}).
+      success(function(data) {
+          $scope.urlPrefix = $scope.urlPrefix.replace('://' + $scope.confed.changeset + '.', '://');
+          $scope.confed.commitmsg = null; 
+          $scope.confed.changeset = null;
+          $scope.confed.state = 'confed';
+          if ($scope.confed.changelog) {
+              $scope.confedShowChangelog();
+          }
+          $scope.submit();
+      }).
+      error(errorHandler);
+  }
+
+  $scope.confedAbort = function(){
+      $http({method: 'DELETE', url: $scope.confed.url + "/changesets/" + $scope.confed.changeset, 
+             headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+             withCredentials: true}).
+        success(function(data) {
+          $scope.urlPrefix = $scope.urlPrefix.replace('://' + $scope.confed.changeset + '.', '://');
+          $scope.confed.commitmsg = null;
+          $scope.confed.changeset = null;
+          $scope.state = 'confed';
+        }).
+        error(errorHandler);
+  }
+
+  $scope.confedShowChangelog = function(){
+      $http({method: 'GET', url: $scope.getPrefix() + "/changelog",
+             withCredentials: true}).
+      success(function(data) {
+          $scope.confed.state = 'confed';
+          $scope.confed.changelog = data;
+      }).
+      error(function(data, status, headers, config){
+          if (status === 403) {
+              $scope.confed.state = 'login';
+              $scope.confed.login_callback = $scope.confedShowChangelog;
+          } else {
+              return errorHandler(data, status, headers, config);
+          }
+      });
+  }
+
+  $scope.confedHideChangelog = function(){
+      $scope.confed.changelog = null;
+  }
 }]);
+
+app.directive('ngEnter', function () {
+    return function (scope, element, attrs) {
+        element.bind("keydown keypress", function (event) {
+            if(event.which === 13) {
+                scope.$apply(function (){
+                    scope.$eval(attrs.ngEnter);
+                });
+
+                event.preventDefault();
+            }
+        });
+    };
+});
 
 app.run(function(editableOptions) {
   editableOptions.theme = 'bs3';

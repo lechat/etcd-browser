@@ -153,3 +153,13 @@ td {
 .properties-padding {
     padding: 20px 5px 20px 5px;
 }
+
+.changelog {
+  border: solid 1px silver;
+  border-radius: 5px;
+  padding: 5px;
+  margin-top: 10px;
+}
+.changelog li {
+  text-align: left;
+}
