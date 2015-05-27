@@ -5,12 +5,15 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
+  $scope.readonly = false;
+
   $scope.confed = {
       state: null,
       username: localStorage.getItem('username'),
       password: null,
       url: null,//confed-url
       changeset: null,
+      changeset_url: null,
       commitmsg: null,
       login_callback:null
   };
@@ -55,6 +58,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
             success(function(data) {
                if (data.indexOf("confed") != -1 && $scope.confed.state === null) {
                    $scope.confed.state = "confed";
+                   $scope.readonly = true;
                }
             }).
             error(errorHandler);
@@ -283,9 +287,10 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
               $scope.confed.url = splitted[0] + "//" + splitted[2];
           }
           $scope.confed.changeset = headers('Location').split('/')[2];
+          $scope.confed.changeset_url = $scope.confed.url.replace('://', '://' + $scope.confed.changeset + '.');
           $scope.confed.state = 'editing';
+          $scope.readonly = false;
           $scope.urlPrefix = $scope.urlPrefix.replace('://', '://' + $scope.confed.changeset + '.');
-          $scope.submit();
       }).
       error(function(data, status, headers, config){
           if (status === 403) {
@@ -323,6 +328,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
           $scope.urlPrefix = $scope.urlPrefix.replace('://' + $scope.confed.changeset + '.', '://');
           $scope.confed.commitmsg = null; 
           $scope.confed.changeset = null;
+          $scope.confed.changeset_url = null;
+          $scope.readonly = true;
           $scope.confed.state = 'confed';
           if ($scope.confed.changelog) {
               $scope.confedShowChangelog();
@@ -340,6 +347,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
           $scope.urlPrefix = $scope.urlPrefix.replace('://' + $scope.confed.changeset + '.', '://');
           $scope.confed.commitmsg = null;
           $scope.confed.changeset = null;
+          $scope.confed.changeset_url = null;
+          $scope.readonly = true;
           $scope.confed.state = 'confed';
           $scope.submit();
         }).

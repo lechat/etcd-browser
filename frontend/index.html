@@ -21,12 +21,16 @@
 <body>
   <script type="text/ng-template" id="prop-block">
     <div class="properties-padding">
-      <button type="button" class="btn btn-default btn-xs" ng-click="addNode(activeNode)" title="Add Property">
+      <button ng-if="!readonly" type="button" class="btn btn-default btn-xs" ng-click="addNode(activeNode)" title="Add Property">
         Add Property
       </button>
+      <div ng-if="!readonly" style="float:right">
+        <input type="checkbox" ng-model="checkboxModel.use_json_validation"><span style="padding-left:5px">validate values to JSON format</span></input>
+      </div>
+      
       <table class="property-table">
         <tr ng-repeat="node in activeNode.nodes | orderBy:'name'" ng-if="!node.dir" ng-class-odd="'odd-row'">
-          <td>
+          <td ng-if="!readonly">
             <button type="button" class="btn btn-default btn-xs" ng-click="copyNode(node)" title="Copy Node">
               <span class="glyphicon glyphicon-floppy-open"></span>
             </button>
@@ -35,10 +39,12 @@
             </button>
           </td>
           <td style="text-align:left;font-weight:bold;padding: 5px 4px;">
-            <span class="name" editable-text="node.name" onbeforesave="renameNode(node,$data)">{{node.name}}:</span>
+            <span ng-if="!readonly" class="name" editable-text="node.name" onbeforesave="renameNode(node,$data)">{{node.name}}:</span>
+            <span ng-if="readonly" class="name">{{node.name}}:</span>
           </td>
           <td style="padding-right: 5px;">
-            <span class="value" editable-textarea="node.value" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
+            <span ng-if="!readonly" class="value" editable-textarea="node.value" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
+            <span ng-if="readonly" class="value">{{node.value || '(empty)'}}</span>
           </td>
         </tr>
       </table>
@@ -67,7 +73,7 @@
   <div class="container-fluid" role="main" ng-controller="NodeCtrl">
     <h1 class="warning">etcd browser</h1>
     <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-4">
 		    <form ng-if="!confed.url" ng-submit="submit()">
 		      <div class="input-group" ng-submit="submit()">
 		        <input type="text" class="form-control" ng-model="urlPrefix" placeholder="http://localhost:4001">
@@ -76,11 +82,9 @@
 		        </span>
 		      </div>
 		    </form>
-	    </div>
-      <div class="col-md-2" style="margin-top:8px">
-        <input type="checkbox" ng-model="checkboxModel.use_json_validation"><span style="padding-left:5px">validate values to JSON format</span></input>
+                    <div style="padding-top:10px;" ng-if="confed.changeset_url">Changeset: {{ confed.changeset_url }}</div>
       </div>
-      <div class="col-md-4" style="margin-top:8px" ng-switch on="confed.state">
+      <div class="col-md-6" style="margin-top:8px" ng-switch on="confed.state">
         <div ng-switch-when="confed">
           Conf-Editor
           <button ng-click="confedBeginEdit()" class="btn btn-default btn-xs" type="button" title="Begin edit">Begin edit</button>
@@ -97,8 +101,7 @@
           </form>
         </div>
         <div ng-switch-when="editing">
-          Editing
-          <input type="text" ng-model="confed.commitmsg" placeholder="Commit message"/>
+          <input type="text" ng-model="confed.commitmsg" style="width:60ex;" placeholder="Commit message"/>
           <button ng-click="confedCommit()" class="btn btn-default btn-xs" type="button" title="Commit">Commit</button>
           <button ng-click="confedAbort()" class="btn btn-default btn-xs" type="button" title="Commit">Abort</button>
         </div>
