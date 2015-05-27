@@ -5,7 +5,17 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
-  $scope.urlPrefix = $location.search().etcd || $location.protocol() + "://" + document.location.host;
+  $scope.confed = {
+      state: null,
+      username: localStorage.getItem('username'),
+      password: null,
+      url: null,//confed-url
+      changeset: null,
+      commitmsg: null,
+      login_callback:null
+  };
+
+  $scope.urlPrefix = $location.search().etcd || $scope.confed.url || $location.protocol() + "://" + document.location.host;
 
   $scope.getPrefix = function() {
     if ($scope.urlPrefix) {
@@ -69,10 +79,12 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     }
   }
   $scope.submit = function(){
-    var splitted = $scope.urlPrefix.split("/");
-    var etcd = splitted[0] + "//" + splitted[2];
-    if (etcd !== $location.protocol() + "://" + document.location.host === !$location.search().etcd) {
-      $location.search('etcd', etcd);
+    if (!$scope.confed.url) {
+        var splitted = $scope.urlPrefix.split("/");
+        var etcd = splitted[0] + "//" + splitted[2];
+        if (etcd !== $location.protocol() + "://" + document.location.host === !$location.search().etcd) {
+          $location.search('etcd', etcd);
+        }
     }
     $scope.root = {key:'/'};
     delete $scope.activeNode;
@@ -266,8 +278,10 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   $scope.confedBeginEdit = function(){
       $http({method: 'POST', url: $scope.getPrefix() + "/changesets/", withCredentials: true}).
       success(function(data, status, headers, config) {
-          var splitted = $scope.urlPrefix.split("/");
-          $scope.confed.url = splitted[0] + "//" + splitted[2];
+          if (!$scope.confed.url) {
+              var splitted = $scope.urlPrefix.split("/");
+              $scope.confed.url = splitted[0] + "//" + splitted[2];
+          }
           $scope.confed.changeset = headers('Location').split('/')[2];
           $scope.confed.state = 'editing';
           $scope.urlPrefix = $scope.urlPrefix.replace('://', '://' + $scope.confed.changeset + '.');
@@ -282,16 +296,6 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
           }
       });      
   }
-
-  $scope.confed = {
-      state: null,
-      username: localStorage.getItem('username'),
-      password: null,
-      url: null,
-      changeset: null,
-      commitmsg: null,
-      login_callback:null
-  };
 
   $scope.confedLogin = function(){
       $http({method: 'POST', url: $scope.getPrefix() + "/login", 
@@ -336,7 +340,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
           $scope.urlPrefix = $scope.urlPrefix.replace('://' + $scope.confed.changeset + '.', '://');
           $scope.confed.commitmsg = null;
           $scope.confed.changeset = null;
-          $scope.state = 'confed';
+          $scope.confed.state = 'confed';
+          $scope.submit();
         }).
         error(errorHandler);
   }

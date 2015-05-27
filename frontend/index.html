@@ -68,7 +68,7 @@
     <h1 class="warning">etcd browser</h1>
     <div class="row">
       <div class="col-md-6">
-		    <form ng-submit="submit()">
+		    <form ng-if="!confed.url" ng-submit="submit()">
 		      <div class="input-group" ng-submit="submit()">
 		        <input type="text" class="form-control" ng-model="urlPrefix" placeholder="http://localhost:4001">
 		        <span class="input-group-btn">
@@ -89,9 +89,9 @@
           <button ng-if="confed.changelog" ng-click="confedHideChangelog()" class="btn btn-default btn-xs" type="button" title="Hide changelog">Hide changelog</button>
         </div>
         <div ng-switch-when="login">
-          Login
           <form name="confed_form">
-            <input type="text" width="40" ng-model="confed.username" placeholder="Username"/>
+            Login
+            <input type="text" ng-model="confed.username" placeholder="Username" style="width:35ex"/>
             <input type="password" ng-model="confed.password" placeholder="Password" ng-enter="confedLogin()"/>
             <button ng-click="confedLogin()" class="btn btn-default btn-xs" type="button" title="Login">Login</button>
           </form>
@@ -106,7 +106,7 @@
     </div>
     <div ng-if="confed.changelog" class="changelog">
       <ul style="margin-bottom:0px">
-        <li ng-repeat="changeset in confed.changelog | orderBy:'time'">{{changeset.time | date:'yyyy-MM-dd HH:mm:ss Z' }} {{changeset.author}} - {{changeset.message}}
+        <li ng-repeat="changeset in confed.changelog | orderBy:'-time' | limitTo:20">{{changeset.time | date:'yyyy-MM-dd HH:mm:ss Z' }} {{changeset.author}} - {{changeset.message}}
           <span ng-if="!changeset.show"><a href="" ng-click="changeset.show=true" >+</a></span>
           <span ng-if="changeset.show"><a href="" ng-click="changeset.show=false" >-</a>
           <ul>
