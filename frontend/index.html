@@ -54,7 +54,7 @@
   <span ng-click="toggleNode(node)" class="glyphicon glyphicon-minus toggle-icon" ng-if="node.open"></span>
   <span ng-click="toggleNode(node)" class="glyphicon glyphicon-plus toggle-icon" ng-if="!node.open"></span>
   <a href="" ng-click="setActiveNode(node)" ng-if="node.dir" class="{{node.key == activeNode.key ? 'active-node' : ''}}">{{node.name}}</a>
-  <div class="btn-group" ng-if="node.key == activeNode.key">
+  <div class="btn-group" ng-if="!readonly && node.key == activeNode.key">
     <button ng-if="node.open" ng-click="createDir(node)" class="btn btn-default btn-xs" type="button" title="Create Directory">
       <span class="glyphicon glyphicon-plus"></span>
     </button>
@@ -95,7 +95,7 @@
         <div ng-switch-when="login">
           <form name="confed_form">
             Login
-            <input type="text" ng-model="confed.username" placeholder="Username" style="width:35ex"/>
+            <input type="text" ng-model="confed.username" placeholder="Username"/>
             <input type="password" ng-model="confed.password" placeholder="Password" ng-enter="confedLogin()"/>
             <button ng-click="confedLogin()" class="btn btn-default btn-xs" type="button" title="Login">Login</button>
           </form>
@@ -120,7 +120,7 @@
       </ul>
     </div>
     <div ng-if="error" class="alert alert-danger alert-dismissible" role="alert">{{error}}</div>
-    <div class="row top-buffer">
+    <div class="row top-buffer" id="panes">
       <div id="navigation">
         <div class="tree prop-block" >
           <ul>
@@ -139,7 +139,7 @@
           </ul>
         </div>
       </div>
-      <div id="resizer" resizer="vertical" resizer-width="6" resizer-left="#navigation" resizer-right="#properties" resizer-max="800"></div>
+      <div id="resizer" resizer="#panes" resizer-width="6" resizer-left="#navigation" resizer-right="#properties" resizer-max="800"></div>
       <div id="properties">
         <div class="prop-block" ng-include="'prop-block'" ng-if="activeNode"></div>
       </div>

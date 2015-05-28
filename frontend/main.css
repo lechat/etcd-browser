@@ -148,6 +148,7 @@ td {
     border-top-stype: none;
     border-bottom-style: none;
     height:20px;
+    cursor:pointer;
 }
 
 .properties-padding {
