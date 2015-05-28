@@ -19,10 +19,6 @@ angular.module('mc.resizer', []).directive('resizer', function($document) {
 					x = parseInt($attrs.resizerMax);
 				}
 
-				$element.css({
-					left: x + 'px'
-				});
-
 				$($attrs.resizerLeft).css({
 					width: x + 'px'
 				});
@@ -33,10 +29,6 @@ angular.module('mc.resizer', []).directive('resizer', function($document) {
 			} else {
 				// Handle horizontal resizer
 				var y = window.innerHeight - event.pageY;
-
-				$element.css({
-					bottom: y + 'px'
-				});
 
 				$($attrs.resizerTop).css({
 					bottom: (y + parseInt($attrs.resizerHeight)) + 'px'
