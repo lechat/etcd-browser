@@ -40,6 +40,10 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
 
   function errorHandler(data, status, headers, config){
     var message = data;
+    if (status === 403 && $scope.confed.url) {
+      $scope.confed.state = 'login';
+      $scope.confed.login_callback = null;
+    }
     if(data.message) {
       message = data.message;
     }
