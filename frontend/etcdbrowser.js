@@ -52,13 +52,13 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
 
   $scope.loadNode = function(node){
     delete $scope.error;
-    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
       success(function(data) {
         prepNodes(data.node.nodes,node);
         node.nodes = data.node.nodes;
         $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key;
         if (node.key === "/") {
-          $http({method: 'GET', url: $scope.getPrefix() + "/version"}).
+          $http({method: 'GET', url: $scope.getPrefix() + "/version", withCredentials: true}).
             success(function(data) {
                if (data.indexOf("confed") != -1 && $scope.confed.state === null) {
                    $scope.confed.state = "confed";
@@ -105,7 +105,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
 
     $http({method: 'PUT',
     	   url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + name,
-    	   params: {"value": value}}).
+    	   params: {"value": value},
+           withCredentials: true}).
     success(function(data) {
       $scope.loadNode(node);
     }).
@@ -125,7 +126,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     }
     $http({method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + node.key,
-      params: {"value": value}}).
+      params: {"value": value},
+      withCredentials: true}).
     success(function(data) {
       $scope.loadNode(node);
     }).
@@ -141,7 +143,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     var reject = function(e) {
       d.reject('Server Error');
     }
-    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
       success(function(data) {
         if (data.node.value != node.value) {
           d.resolve('The value has changed by someone else');
@@ -149,18 +151,19 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
         }  
         $http({method: 'PUT',
                url: $scope.getPrefix() + keyPrefix + newkey,
-               params: {"value": node.value}}).
+               params: {"value": node.value},
+               withCredentials: true}).
           success(function(data) {
-            $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+            $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
               success(function(data) {
                 if (data.node.value != node.value) {
-                  $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + newkey}).
+                  $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + newkey, withCredentials: true}).
                     success(function(data) {
                       d.resolve('The value has changed by someone else');
                     }).
                     error(reject);
                 } else {
-                  $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + node.key}).
+                  $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
                     success(function(data) {
                       $scope.loadNode(node.parent);
                       d.resolve();
@@ -177,7 +180,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   }
 
   $scope.deleteNode = function(node){
-    $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + node.key}).
+    $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
     success(function(data) {
       $scope.loadNode(node.parent);
     }).
@@ -190,7 +193,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     dirName = $scope.formatDir(dirName);
     $http({method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + dirName + node.name,
-      params: {"value": node.value}}).
+      params: {"value": node.value},
+      withCredentials: true}).
     error(errorHandler);
   }
 
@@ -199,7 +203,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     if(!dirName || dirName == "") return;
     $http({method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + dirName,
-      params: {"dir": true}}).
+      params: {"dir": true},
+      withCredentials: true}).
     success(function(data) {
       $scope.loadNode(node);
     }).
@@ -207,7 +212,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   }
 
   $scope.copyDirAux = function(node, tarjet){
-    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
       success(function(data) {
         prepNodes(data.node.nodes,node);
         node.nodes = data.node.nodes;
@@ -218,7 +223,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
             var url = $scope.getPrefix() + keyPrefix + tarjet + node.nodes[key].name
             $http({method: 'PUT',
               url: url,
-              params: {"value": node.nodes[key].value}}).
+              params: {"value": node.nodes[key].value},
+              withCredentials: true}).
             error(errorHandler);
           }
         }
@@ -236,7 +242,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   $scope.deleteDir = function(node) {
     if(!confirm("Are you sure you want to delete " + node.key)) return;
     $http({method: 'DELETE',
-      url: $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"}).
+      url: $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true",
+        withCredentials: true}).
     success(function(data) {
       $scope.loadNode(node.parent);
     }).
@@ -264,19 +271,19 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   $scope.loadStats = function(){
     console.log("LOAD STATS");
     $scope.stats = {};
-    $http({method: 'GET', url: $scope.getPrefix() + statsPrefix + "/store"}).
+    $http({method: 'GET', url: $scope.getPrefix() + statsPrefix + "/store", withCredentials: true}).
     success(function(data) {
       $scope.stats.store = JSON.stringify(data, null, " ");
     }).
     error(errorHandler);
     delete $scope.storeStats;
-    $http({method: 'GET', url: $scope.getPrefix() + statsPrefix + "/leader"}).
+    $http({method: 'GET', url: $scope.getPrefix() + statsPrefix + "/leader", withCredentials: true}).
     success(function(data) {
       $scope.stats.leader = JSON.stringify(data, null, " ");
     }).
     error(errorHandler);
     delete $scope.storeStats;
-    $http({method: 'GET', url: $scope.getPrefix() + statsPrefix + "/self"}).
+    $http({method: 'GET', url: $scope.getPrefix() + statsPrefix + "/self", withCredentials: true}).
     success(function(data) {
       $scope.stats.self = JSON.stringify(data, null, " ");
     }).
