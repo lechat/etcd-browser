@@ -11,7 +11,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
       state: null,
       username: localStorage.getItem('username'),
       password: null,
-      url: null,//confed-url
+      url: 'https://confed.dev.projectplace.com:4001',
       changeset: null,
       changeset_url: null,
       commitmsg: null,
@@ -30,12 +30,16 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
 
 
   $scope.setActiveNode = function(node){
-    $scope.activeNode = node;
-    if(!node.open){
-      $scope.toggleNode(node);
-    }else{
-      $scope.loadNode(node);
-    }
+      if ($scope.activeNode == node) {
+          $scope.toggleNode(node);
+      } else {
+          $scope.activeNode = node;
+          if(!node.open){
+              $scope.toggleNode(node);
+          } else {
+              $scope.loadNode(node);
+          }
+      }
   }
 
   function errorHandler(data, status, headers, config){
@@ -55,7 +59,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key, withCredentials: true}).
       success(function(data) {
         prepNodes(data.node.nodes,node);
-        node.nodes = data.node.nodes;
+          node.nodes = data.node.nodes;
         $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key;
         if (node.key === "/") {
           $http({method: 'GET', url: $scope.getPrefix() + "/version", withCredentials: true}).
@@ -76,7 +80,11 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     if(node.open){
       $scope.loadNode(node);
     } else {
-      node.nodes = [];
+        if (node.nodes) {
+            node.nodes = node.nodes.filter(function(n) { return !n.dir });
+        } else {
+            node.nodes = [];
+        }
     }
   };
   $scope.hasProperties = function(node){
@@ -111,7 +119,25 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
       $scope.loadNode(node);
     }).
     error(errorHandler);
-  }
+  };
+  $scope.newNode = function(value){
+    if ($scope.checkboxModel.use_json_validation) {
+      try {
+        JSON.parse(value);
+      } catch (err) {
+        return 'Not a json';
+      }
+    }
+    $http({method: 'PUT',
+    	   url: $scope.getPrefix() + keyPrefix + $scope.activeNode.key + ($scope.activeNode.key != "/" ? "/" : "") + $scope.activeNode.newkey.trim(),
+    	   params: {"value": value},
+           withCredentials: true}).
+        success(function(data) {
+            $scope.loadNode($scope.activeNode);
+            $scope.activeNode.newkey = null;
+        }).
+        error(errorHandler);
+  };
 
   $scope.checkboxModel = {
     use_json_validation : true
