@@ -11,7 +11,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
       state: null,
       username: localStorage.getItem('username'),
       password: null,
-      url: 'https://confed.dev.projectplace.com:4001',
+      url: null,//confed-url
       changeset: null,
       changeset_url: null,
       commitmsg: null,
