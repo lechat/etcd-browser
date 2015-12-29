@@ -16,7 +16,7 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   }
 
 
-  $scope.setActiveNode = function(node){
+  $scope.setActiveNode = function(node) {
     $scope.activeNode = node;
     if(!node.open){
       $scope.toggleNode(node);
@@ -25,21 +25,37 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     }
   }
 
+  function keyErrorHandler(data, url){
+    var message = data;
+    if(data.message) {
+      message = data.message;
+    }
+    $scope.error = "Request failed - " + message + " - " + url;
+  }
+
   function errorHandler(data, status, headers, config){
     var message = data;
     if(data.message) {
       message = data.message;
     }
     $scope.error = "Request failed - " + message + " - " + config.url;
+    $scope.loading = false;
   }
 
   $scope.loadNode = function(node){
     delete $scope.error;
-    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+    $scope.loading = true;
+    var url = $scope.getPrefix() + keyPrefix + node.key;
+    $http({method: 'GET', url: url}).
       success(function(data) {
-        prepNodes(data.node.nodes,node);
-        node.nodes = data.node.nodes;
-        $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key
+        if (! angular.isDefined(data.node)) {
+            keyErrorHandler(data, url);
+        } else {
+            prepNodes(data.node.nodes,node);
+            node.nodes = data.node.nodes;
+            $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key
+        }
+        $scope.loading = false;
       }).
       error(errorHandler);
   }
@@ -61,11 +77,14 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   }
   $scope.submit = function(){
     var splitted = $scope.urlPrefix.split("/");
-    var etcd = splitted[0] + "//" + splitted[2];
-    if (etcd !== $location.protocol() + "://" + document.location.host === !$location.search().etcd) {
-      $location.search('etcd', etcd);
+    // var etcd = splitted[0] + "//" + splitted[2];
+    // if (etcd !== $location.protocol() + "://" + document.location.host === !$location.search().etcd) {
+    //   $location.search('etcd', etcd);
+    // }
+    $scope.root = {
+        key: '/' + splitted.slice(5).join('/'),
+        name: splitted.slice(-1)
     }
-    $scope.root = {key:'/'};
     delete $scope.activeNode;
     $scope.loadNode($scope.root);
   }
