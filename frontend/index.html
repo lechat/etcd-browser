@@ -1,17 +1,10 @@
 <!DOCTYPE html>
 <html ng-app="app">
 <head>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.min.js" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-cookies.min.js" type="text/javascript"> </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" type="text/css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap-theme.min.css" type="text/css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js" type="text/javascript"></script>
-  <link href="angular-xeditable/css/xeditable.css" rel="stylesheet" type="text/css">
-  <script src="angular-xeditable/js/xeditable.js" type="text/javascript"></script>
-  <script src="resize.js" type="text/javascript"></script>
+  <link href="bower_components/angular-xeditable/dist/css/xeditable.css" rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="main.css" type="text/css">
-  <script src="etcdbrowser.js" type="text/javascript"></script>
 
   <title></title>
 </head>
@@ -36,7 +29,8 @@
               <span class="name" editable-text="node.name" onbeforesave="renameNode(node,$data)">{{node.name}}:</span>
             </td>
             <td style="padding-right: 5px;">
-              <span class="value" editable-textarea="node.value" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
+              <span class="value" editable-textarea="node.value" ng-if="checkboxModel.use_json_validation" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
+              <span class="value" editable-text="node.value" ng-if="!checkboxModel.use_json_validation" onbeforesave="updateNode(node,$data)" e-cols="40">{{node.value || '(empty)'}}</span>
             </td>
           </tr>
         </table>
@@ -184,5 +178,12 @@
       </div>
     </div>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular.min.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.20/angular-cookies.min.js" type="text/javascript"> </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js" type="text/javascript"></script>
+  <script src="bower_components/angular-xeditable/dist/js/xeditable.js" type="text/javascript"></script>
+  <script src="resize.js" type="text/javascript"></script>
+  <script src="etcdbrowser.js" type="text/javascript"></script>
 </body>
 </html>

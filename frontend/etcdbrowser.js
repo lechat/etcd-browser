@@ -275,6 +275,8 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
 
 }]);
 
-app.run(function(editableOptions) {
+app.run(function(editableOptions, editableThemes) {
+  editableThemes.bs3.inputClass = 'input-sm';
+  editableThemes.bs3.buttonsClass = 'btn-sm';
   editableOptions.theme = 'bs3';
 });

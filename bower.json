@@ -1,0 +1,28 @@
+{
+  "name": "etcd-browser",
+  "homepage": "https://github.com/lechat/etcd-browser",
+  "authors": [
+    "Aleksey Maksimov <ctpeko3a@gmail.com>"
+  ],
+  "description": "Etcd Editor",
+  "main": "server.js",
+  "moduleType": [
+    "amd",
+    "es6"
+  ],
+  "keywords": [
+    "etcd"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-xeditable": "~0.1.9"
+  }
+}
