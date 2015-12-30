@@ -5,7 +5,7 @@
 [http://henszey.github.io/etcd-browser/](http://henszey.github.io/etcd-browser/)
 
 ## Screen Shot
-![etcd-browser Screen Shot](http://henszey.github.io/etcd-browser/images/etcdbrowser.png)
+![etcd-browser Screen Shot](http://lechat.github.io/etcd-browser/images/screenshot.png)
 
 ## TODO
 * Implement missing features (TTL)
