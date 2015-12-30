@@ -132,3 +132,8 @@ td {
 .alert-tiny {
     margin-bottom: 1px;
 }
+
+.modal-dialog {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

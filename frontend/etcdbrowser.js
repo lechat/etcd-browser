@@ -106,13 +106,15 @@ app.controller('NodeCtrl', [
   }
 
   $scope.addNode = function(node){
-    $scope.new_item = {
+    $scope.modalNewItem({
         name: '',
         value: '',
         isDir: false,
-        node: node
-    };
-    $scope.modalNewItem();
+        node: node,
+        title: 'New Key/Value pair for node ' + node.key,
+        nameTitle: 'Name',
+        op: 'addPair'
+    }, $scope.addEtcdKeyValue);
   }
 
   $scope.addEtcdKeyValue = function() {
@@ -214,9 +216,15 @@ app.controller('NodeCtrl', [
   }
 
   $scope.createDir = function(node){
-    $scope.new_item.node = node;
-    $scope.new_item.isDir = true;
-    $scope.modalNewItem();
+    $scope.modalNewItem({
+        name: '',
+        value: '',
+        isDir: true,
+        node: node,
+        title: 'New Node under ' + node.key,
+        nameTitle: 'Name',
+        op: 'addDir'
+    }, $scope.createEtcdDir);
   }
 
   $scope.createEtcdDir = function() {
@@ -253,7 +261,21 @@ app.controller('NodeCtrl', [
   }
 
   $scope.copyDir = function(node){
-    var dirName = prompt("Copy properties to directory", node.key);
+    $scope.modalNewItem({
+        name: node.key,
+        value: '',
+        isDir: true,
+        node: node,
+        op: 'copyDir',
+        title: 'Copy Node from ' + node.key,
+        nameTitle: 'To'
+    }, $scope.etcdCopyDir);
+  }
+
+  $scope.etcdCopyDir = function() {
+    var dirName = $scope.new_item.name;
+    var node = $scope.new_item.node;
+
     if(!dirName || dirName == "") return;
     dirName = $scope.formatDir(dirName);
     $scope.copyDirAux(node, dirName)
@@ -309,9 +331,10 @@ app.controller('NodeCtrl', [
     error(errorHandler);
   }
 
-  $scope.modalNewItem = function () {
+  $scope.modalNewItem = function (item, onPromise) {
+    $scope.new_item = item;
     var modalInstance = $uibModal.open({
-      templateUrl: 'new_item.html',
+      templateUrl: 'modal-dialog.html',
       controller: 'ModalInstanceCtrl',
       resolve: {
         new_item: function () {
@@ -321,11 +344,7 @@ app.controller('NodeCtrl', [
     });
 
     modalInstance.result.then(function (new_item) {
-        if ($scope.new_item.isDir) {
-            $scope.createEtcdDir();
-        } else {
-            $scope.addEtcdKeyValue();
-        }
+        onPromise();
     }, function () {
         // dismissed - do nothing
     });
@@ -350,3 +369,12 @@ app.controller('ModalInstanceCtrl', function ($scope, $uibModalInstance, new_ite
       $uibModalInstance.dismiss('cancel');
     };
 });
+
+app.directive('treeItem', function () {
+  return {
+    restrict: 'E',
+    transclude: true,
+    templateUrl: 'tree-item.html'
+  };
+});
+
