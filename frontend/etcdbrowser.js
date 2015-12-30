@@ -114,23 +114,21 @@ app.controller('NodeCtrl', [
         title: 'New Key/Value pair for node ' + node.key,
         nameTitle: 'Name',
         op: 'addPair'
-    }, $scope.addEtcdKeyValue);
-  }
+    }, function() {
+        var name = $scope.new_item.name;
+        var value = $scope.new_item.value;
+        var node = $scope.new_item.node;
 
-  $scope.addEtcdKeyValue = function() {
-    var name = $scope.new_item.name;
-    var value = $scope.new_item.value;
-    var node = $scope.new_item.node;
+        if (!name || name == "") return;
 
-    if(!name || name == "") return;
-
-    $http({method: 'PUT',
-    	   url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + name,
-    	   params: {"value": value}}).
-    success(function(data) {
-      $scope.loadNode(node);
-    }).
-    error(errorHandler);
+        $http({method: 'PUT',
+               url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + name,
+               params: {"value": value}}).
+        success(function(data) {
+          $scope.loadNode(node);
+        }).
+        error(errorHandler);
+      });
   }
 
   $scope.checkboxModel = {
@@ -224,20 +222,19 @@ app.controller('NodeCtrl', [
         title: 'New Node under ' + node.key,
         nameTitle: 'Name',
         op: 'addDir'
-    }, $scope.createEtcdDir);
-  }
-
-  $scope.createEtcdDir = function() {
-    if (!$scope.new_item.name || $scope.new_item.name == "") return;
-    var dirName = $scope.new_item.name;
-    var node = $scope.new_item.node;
-    $http({method: 'PUT',
-      url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + dirName,
-      params: {"dir": true}}).
-    success(function(data) {
-      $scope.loadNode(node);
-    }).
-    error(errorHandler);
+    }, function() {
+        if (!$scope.new_item.name || $scope.new_item.name == "") return;
+        var dirName = $scope.new_item.name;
+        var node = $scope.new_item.node;
+        $http({method: 'PUT',
+          url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + dirName,
+          params: {"dir": true}}).
+        success(function(data) {
+          $scope.loadNode(node);
+        }).
+        error(errorHandler);
+      }
+    );
   }
 
   $scope.copyDirAux = function(node, tarjet){
@@ -269,16 +266,15 @@ app.controller('NodeCtrl', [
         op: 'copyDir',
         title: 'Copy Node from ' + node.key,
         nameTitle: 'To'
-    }, $scope.etcdCopyDir);
-  }
+    }, function() {
+        var dirName = $scope.new_item.name;
+        var node = $scope.new_item.node;
 
-  $scope.etcdCopyDir = function() {
-    var dirName = $scope.new_item.name;
-    var node = $scope.new_item.node;
-
-    if(!dirName || dirName == "") return;
-    dirName = $scope.formatDir(dirName);
-    $scope.copyDirAux(node, dirName)
+        if(!dirName || dirName == "") return;
+        dirName = $scope.formatDir(dirName);
+        $scope.copyDirAux(node, dirName)
+      }
+    );
   }
 
   $scope.deleteDir = function(node) {
@@ -368,13 +364,5 @@ app.controller('ModalInstanceCtrl', function ($scope, $uibModalInstance, new_ite
     $scope.newItemCancel = function () {
       $uibModalInstance.dismiss('cancel');
     };
-});
-
-app.directive('treeItem', function () {
-  return {
-    restrict: 'E',
-    transclude: true,
-    templateUrl: 'tree-item.html'
-  };
 });
 
