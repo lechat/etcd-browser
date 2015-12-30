@@ -1,4 +1,6 @@
-.top-buffer { margin-top:20px; }
+.top-buffer {
+  margin-top:10px;
+}
 
 .tree li {
     margin: 0px 0;
@@ -125,4 +127,8 @@ td {
 
 .properties-padding {
     padding: 20px 5px 20px 5px;
+}
+
+.alert-tiny {
+    margin-bottom: 1px;
 }

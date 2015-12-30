@@ -1,11 +1,18 @@
+var app = angular.module("app", ["xeditable", "mc.resizer", "ui.bootstrap"]);
 
-var app = angular.module("app", ["xeditable", "mc.resizer"]);
-
-app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$http,$location,$q) {
+app.controller('NodeCtrl', [
+        '$scope','$http','$location','$q', '$uibModal', '$log',
+        function($scope,$http,$location,$q, $uibModal, $log) {
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
   $scope.urlPrefix = $location.search().etcd || $location.protocol() + "://" + document.location.host;
+  $scope.new_item = {
+    name: '',
+    value: '',
+    isDir: false,
+    node: null
+  };
 
   $scope.getPrefix = function() {
     if ($scope.urlPrefix) {
@@ -88,9 +95,31 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     delete $scope.activeNode;
     $scope.loadNode($scope.root);
   }
+
+  $scope.resetRoot = function () {
+    $scope.root = {
+        key: '/',
+        name: '/'
+    }
+    delete $scope.activeNode;
+    $scope.loadNode($scope.root);
+  }
+
   $scope.addNode = function(node){
-    var name = prompt("Enter Property Name", "");
-    var value = prompt("Enter Property value", "");
+    $scope.new_item = {
+        name: '',
+        value: '',
+        isDir: false,
+        node: node
+    };
+    $scope.modalNewItem();
+  }
+
+  $scope.addEtcdKeyValue = function() {
+    var name = $scope.new_item.name;
+    var value = $scope.new_item.value;
+    var node = $scope.new_item.node;
+
     if(!name || name == "") return;
 
     $http({method: 'PUT',
@@ -185,8 +214,15 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
   }
 
   $scope.createDir = function(node){
-    var dirName = prompt("Enter Directory Name", "");
-    if(!dirName || dirName == "") return;
+    $scope.new_item.node = node;
+    $scope.new_item.isDir = true;
+    $scope.modalNewItem();
+  }
+
+  $scope.createEtcdDir = function() {
+    if (!$scope.new_item.name || $scope.new_item.name == "") return;
+    var dirName = $scope.new_item.name;
+    var node = $scope.new_item.node;
     $http({method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + dirName,
       params: {"dir": true}}).
@@ -273,10 +309,44 @@ app.controller('NodeCtrl', ['$scope','$http','$location','$q', function($scope,$
     error(errorHandler);
   }
 
+  $scope.modalNewItem = function () {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'new_item.html',
+      controller: 'ModalInstanceCtrl',
+      resolve: {
+        new_item: function () {
+          return $scope.new_item;
+        }
+      }
+    });
+
+    modalInstance.result.then(function (new_item) {
+        if ($scope.new_item.isDir) {
+            $scope.createEtcdDir();
+        } else {
+            $scope.addEtcdKeyValue();
+        }
+    }, function () {
+        // dismissed - do nothing
+    });
+  }
+
 }]);
 
 app.run(function(editableOptions, editableThemes) {
   editableThemes.bs3.inputClass = 'input-sm';
   editableThemes.bs3.buttonsClass = 'btn-sm';
   editableOptions.theme = 'bs3';
+});
+
+app.controller('ModalInstanceCtrl', function ($scope, $uibModalInstance, new_item) {
+    $scope.new_item = new_item;
+
+    $scope.newItemOk = function () {
+      $uibModalInstance.close($scope.new_item);
+    };
+
+    $scope.newItemCancel = function () {
+      $uibModalInstance.dismiss('cancel');
+    };
 });
