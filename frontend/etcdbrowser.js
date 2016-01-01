@@ -1,4 +1,9 @@
-var app = angular.module("app", ["xeditable", "mc.resizer", "ui.bootstrap"]);
+var app = angular.module("app", [
+    "xeditable",
+    "mc.resizer",
+    "ui.bootstrap",
+    "ang-drag-drop"
+]);
 
 app.controller('NodeCtrl', [
         '$scope','$http','$location','$q', '$uibModal', '$log',
@@ -277,6 +282,28 @@ app.controller('NodeCtrl', [
     );
   }
 
+  $scope.copyDirDrop = function(event, source, target){
+    return $scope.modalNewItem({
+        name: target.key,
+        value: '',
+        isDir: true,
+        node: source,
+        op: 'copyDir',
+        title: 'Copy Node from ' + source.key,
+        nameTitle: 'To'
+    }, function() {
+        var dirName = $scope.new_item.name;
+        var node = $scope.new_item.node;
+
+        if(!dirName || dirName == "") return;
+        dirName = $scope.formatDir(dirName);
+        $scope.copyDirAux(node, dirName)
+        $scope.loadNode(target);
+        $scope.setActiveNode(target);
+      }
+    );
+  }
+
   $scope.deleteDir = function(node) {
     if(!confirm("Are you sure you want to delete " + node.key)) return;
     $http({method: 'DELETE',
@@ -344,6 +371,8 @@ app.controller('NodeCtrl', [
     }, function () {
         // dismissed - do nothing
     });
+
+    return modalInstance.result;
   }
 
 }]);
