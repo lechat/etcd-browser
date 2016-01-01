@@ -25,6 +25,7 @@
   "dependencies": {
     "angular-xeditable": "~0.1.9",
     "angular-ui": "~0.4.0",
-    "angular-bootstrap": "~0.14.3"
+    "angular-bootstrap": "~0.14.3",
+    "angular-native-dragdrop": "~1.2.0"
   }
 }
