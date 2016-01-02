@@ -112,16 +112,20 @@ app.controller('NodeCtrl', [
 
   $scope.addNode = function(node){
     $scope.modalNewItem({
-        name: '',
-        value: '',
-        isDir: false,
-        node: node,
         title: 'New Key/Value pair for node ' + node.key,
-        nameTitle: 'Name',
-        op: 'addPair'
+        firstInput: {
+            label: 'Name',
+            value: ''
+        },
+        secondInput: {
+            label: 'Value',
+            value: ''
+        },
+        isDir: false,
+        node: node
     }, function() {
-        var name = $scope.new_item.name;
-        var value = $scope.new_item.value;
+        var name = $scope.new_item.firstInput.value;
+        var value = $scope.new_item.secondInput.value;
         var node = $scope.new_item.node;
 
         if (!name || name == "") return;
@@ -220,16 +224,18 @@ app.controller('NodeCtrl', [
 
   $scope.createDir = function(node){
     $scope.modalNewItem({
-        name: '',
-        value: '',
-        isDir: true,
-        node: node,
         title: 'New Node under ' + node.key,
-        nameTitle: 'Name',
-        op: 'addDir'
+        firstInput: {
+            label: 'Name',
+            value: ''
+        },
+        secondInput: {},
+        isDir: true,
+        node: node
     }, function() {
-        if (!$scope.new_item.name || $scope.new_item.name == "") return;
-        var dirName = $scope.new_item.name;
+        var dirName = $scope.new_item.firstInput.value;
+        if (!dirName || dirName == "") return;
+
         var node = $scope.new_item.node;
         $http({method: 'PUT',
           url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + dirName,
@@ -242,62 +248,75 @@ app.controller('NodeCtrl', [
     );
   }
 
-  $scope.copyDirAux = function(node, tarjet){
-    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key}).
+  $scope.copyDirAux = function(source, target){
+    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + source.key}).
       success(function(data) {
-        prepNodes(data.node.nodes,node);
-        node.nodes = data.node.nodes;
-        for(var key in node.nodes){
-          if (node.nodes[key].dir) {
-            $scope.copyDirAux(node.nodes[key], tarjet + node.nodes[key].name + "/")
-          } else {
-            var url = $scope.getPrefix() + keyPrefix + tarjet + node.nodes[key].name
-            $http({method: 'PUT',
-              url: url,
-              params: {"value": node.nodes[key].value}}).
-            error(errorHandler);
-          }
+        prepNodes(data.node.nodes, source);
+
+        var url = $scope.getPrefix() + keyPrefix + target + source.name;
+        $http({
+          method: 'PUT', url: url,
+          params: {"dir": true}}).error(errorHandler);
+
+        source.nodes = data.node.nodes;
+        if ('nodes' in source && typeof source.nodes !== 'undefined') {
+          source.nodes.forEach(function (child) {
+            if (child.dir) {
+              $scope.copyDirAux(child, target + source.name + "/");
+            } else {
+              var url = $scope.getPrefix() + keyPrefix + target + source.name + '/' + child.name;
+              $http({
+                method: 'PUT', url: url,
+                params: {"value": child.value}}).error(errorHandler);
+            }
+          })
         }
-      }).
-      error(errorHandler);
+      }).error(errorHandler);
   }
 
   $scope.copyDir = function(node){
     $scope.modalNewItem({
-        name: node.key,
-        value: '',
-        isDir: true,
-        node: node,
-        op: 'copyDir',
         title: 'Copy Node from ' + node.key,
-        nameTitle: 'To'
+        firstInput: {
+            label: 'To',
+            value: ''
+        },
+        secondInput: {},
+        isDir: true,
+        node: node
     }, function() {
-        var dirName = $scope.new_item.name;
+        var dirName = $scope.new_item.firstInput.value;
         var node = $scope.new_item.node;
 
         if(!dirName || dirName == "") return;
+
         dirName = $scope.formatDir(dirName);
         $scope.copyDirAux(node, dirName)
       }
     );
   }
 
+  // TODO: handle old style - merge on copy
+  // TODO: handle move
   $scope.copyDirDrop = function(event, source, target){
     return $scope.modalNewItem({
-        name: target.key,
-        value: '',
-        isDir: true,
-        node: source,
-        op: 'copyDir',
         title: 'Copy Node from ' + source.key,
-        nameTitle: 'To'
+        firstInput: {
+            label: 'To',
+            value: target.key
+        },
+        secondInput: {},
+        isDir: true,
+        node: source
     }, function() {
-        var dirName = $scope.new_item.name;
+        var dirName = $scope.new_item.firstInput.value;
         var node = $scope.new_item.node;
 
         if(!dirName || dirName == "") return;
+
         dirName = $scope.formatDir(dirName);
         $scope.copyDirAux(node, dirName)
+
         $scope.loadNode(target);
         $scope.setActiveNode(target);
       }
@@ -323,7 +342,7 @@ app.controller('NodeCtrl', [
 
   $scope.submit();
 
-  function prepNodes(nodes,parent){
+  function prepNodes(nodes, parent){
     for(var key in nodes){
       var node = nodes[key];
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
