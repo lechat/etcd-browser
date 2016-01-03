@@ -32,9 +32,6 @@
 .tree li a:hover+ul li a,
 .tree li a:hover~.prop-block {
   background: #c8e4f8; color: #000; border: 1px solid #94a0b4;
-  -webkit-box-shadow: 2px 2px 7px 1px rgba(0,0,0,0.41);
-  -moz-box-shadow: 2px 2px 7px 1px rgba(0,0,0,0.41);
-  box-shadow: 2px 2px 7px 1px rgba(0,0,0,0.41);
 }
 
 .tree li a:hover+ul li::after,
@@ -64,10 +61,6 @@ ul {
   color: black !important;
   font-weight:bold;
   border: 2px solid black !important;
-
-  -webkit-box-shadow: 2px 2px 7px 1px rgba(0,0,0,0.41);
-  -moz-box-shadow: 2px 2px 7px 1px rgba(0,0,0,0.41);
-  box-shadow: 2px 2px 7px 1px rgba(0,0,0,0.41);
 }
 
 .active-node ~ ul a {
