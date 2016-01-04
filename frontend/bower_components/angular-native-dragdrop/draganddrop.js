@@ -1,5 +1,5 @@
 (function(angular) {
-    // 'use strict';
+    'use strict';
 
     function isDnDsSupported() {
         return 'ondrag' in document.createElement('a');
@@ -152,27 +152,7 @@
                         setDragElement(e, attrs.dragImageElementId);
                     }
 
-                    // AM etcd-browser change
-                    var newDragData = (function (dragData) {
-                      var args = arguments;
-                      var drgData = {
-                        dir: dragData.dir,
-                        key: dragData.key,
-                        value: dragData.value,
-                        name: dragData.name,
-                        open: dragData.open,
-                        nodes: []
-                      };
-                      if ("nodes" in dragData) {
-                        dragData.nodes.forEach(function (node) {
-                          drgData.nodes.push(args.callee(node));
-                        });
-                      }
-                      return drgData;
-                    })(dragData);
-
-                    var transferDataObject = {data: newDragData, channel: sendChannel};
-
+                    var transferDataObject = {data: dragData, channel: sendChannel};
                     var transferDataText = angular.toJson(transferDataObject);
 
                     e.dataTransfer.setData('text', transferDataText);
