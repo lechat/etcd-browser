@@ -2,7 +2,8 @@ var app = angular.module("app", [
     "xeditable",
     "mc.resizer",
     "ui.bootstrap",
-    "ang-drag-drop"
+    "ang-drag-drop",
+    "pageslide-directive"
 ]);
 
 app.controller('NodeCtrl', [
@@ -19,6 +20,12 @@ app.controller('NodeCtrl', [
     node: null
   };
 
+  $scope.slideOpen = false;
+
+  $scope.toggleSlide = function () {
+      $scope.slideOpen = !$scope.slideOpen;
+  }
+
   $scope.getPrefix = function() {
     if ($scope.urlPrefix) {
       var splitted = $scope.urlPrefix.split("/");
@@ -30,10 +37,10 @@ app.controller('NodeCtrl', [
 
   $scope.setActiveNode = function(node) {
     $scope.activeNode = node;
-    if(!node.open){
-      $scope.toggleNode(node);
-    }else{
+    if (node.open) {
       $scope.loadNode(node);
+    } else {
+      $scope.toggleNode(node);
     }
   }
 
@@ -63,7 +70,7 @@ app.controller('NodeCtrl', [
         if (! angular.isDefined(data.node)) {
             keyErrorHandler(data, url);
         } else {
-            prepNodes(data.node.nodes,node);
+            prepNodes(data.node.nodes, node);
             node.nodes = data.node.nodes;
             $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key
         }
@@ -74,7 +81,7 @@ app.controller('NodeCtrl', [
 
   $scope.toggleNode = function(node) {
     node.open = !node.open;
-    if(node.open){
+    if (node.open) {
       $scope.loadNode(node);
     } else {
       node.nodes = [];
@@ -87,6 +94,7 @@ app.controller('NodeCtrl', [
       }
     }
   }
+
   $scope.submit = function(){
     var splitted = $scope.urlPrefix.split("/");
     // var etcd = splitted[0] + "//" + splitted[2];
@@ -99,6 +107,22 @@ app.controller('NodeCtrl', [
     }
     delete $scope.activeNode;
     $scope.loadNode($scope.root);
+  }
+
+  $scope.setRoot = function () {
+    $scope.modalNewItem({
+        title: 'Set tree root',
+        firstInput: {
+            label: 'To',
+            value: $scope.urlPrefix
+        },
+        secondInput: {},
+        isDir: true,
+        node: null
+    }, function() {
+        $scope.urlPrefix = $scope.new_item.firstInput.value;
+        $scope.submit();
+    });
   }
 
   $scope.resetRoot = function () {
@@ -340,14 +364,20 @@ app.controller('NodeCtrl', [
     return dirName;
   }
 
-  $scope.submit();
+  $scope.$watch('$viewContentLoaded', $scope.submit());
+  // $scope.submit();
 
   function prepNodes(nodes, parent){
     for(var key in nodes){
       var node = nodes[key];
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
       node.name = name;
-      node.parent = parent;
+      node.parent = {
+          key: parent.key,
+          name: parent.name,
+          dir: true,
+          nodes: []
+      }
     }
   }
 
@@ -395,6 +425,13 @@ app.controller('NodeCtrl', [
   }
 
 }]);
+
+app.filter('prettyJson', function () {
+    function ppJson(json) {
+        return JSON ? JSON.stringify(json, null, '  ') : 'your browser doesnt support JSON so cant pretty print';
+    }
+    return ppJson;
+});
 
 app.run(function(editableOptions, editableThemes) {
   editableThemes.bs3.inputClass = 'input-sm';
