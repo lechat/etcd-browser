@@ -3,7 +3,8 @@ var app = angular.module("app", [
     "mc.resizer",
     "ui.bootstrap",
     "ang-drag-drop",
-    "pageslide-directive"
+    "pageslide-directive",
+    "ui.ace"
 ]);
 
 app.controller('NodeCtrl', [
@@ -22,8 +23,12 @@ app.controller('NodeCtrl', [
 
   $scope.slideOpen = false;
 
-  $scope.toggleSlide = function () {
+  $scope.toggleSlide = function (state) {
+    if (arguments.length == 0) {
       $scope.slideOpen = !$scope.slideOpen;
+    } else {
+      $scope.slideOpen = state;
+    }
   }
 
   $scope.getPrefix = function() {
@@ -79,6 +84,23 @@ app.controller('NodeCtrl', [
       error(errorHandler);
   }
 
+  $scope.loadNodeRecursive = function(node) {
+    delete $scope.error;
+    $scope.loading = true;
+    var url = $scope.getPrefix() + keyPrefix + node.key + '?recursive=true';
+    $http({method: 'GET', url: url}).
+      success(function(data) {
+        if (! angular.isDefined(data.node)) {
+            keyErrorHandler(data, url);
+        } else {
+            $scope.simpleNode = JSON.stringify(nodesSimplifier(data.node), null, 2);
+        }
+        $scope.loading = false;
+        $scope.toggleSlide();
+      }).
+      error(errorHandler);
+  }
+
   $scope.toggleNode = function(node) {
     node.open = !node.open;
     if (node.open) {
@@ -87,6 +109,7 @@ app.controller('NodeCtrl', [
       node.nodes = [];
     }
   };
+
   $scope.hasProperties = function(node){
     for(var key in node.nodes){
       if(!node.nodes[key].dir){
@@ -167,7 +190,8 @@ app.controller('NodeCtrl', [
   $scope.checkboxModel = {
     use_json_validation : false
   };
-  $scope.updateNode = function(node,value){
+
+  $scope.updateNode = function(node, value){
     if ($scope.checkboxModel.use_json_validation) {
       try {
         JSON.parse(value);
@@ -379,6 +403,54 @@ app.controller('NodeCtrl', [
           nodes: []
       }
     }
+  }
+
+  function nodesSimplifier(node) {
+    var returnNode = {};
+    var nodeKey = node.key.substring(node.key.lastIndexOf("/")+1);
+    returnNode[nodeKey] = {};
+    for (var idx in node.nodes) {
+        var child = node.nodes[idx];
+        if (child.dir) {
+            var simples = nodesSimplifier(child);
+            for (var key in simples) {
+                returnNode[nodeKey][key] = simples[key];
+            }
+        } else {
+            var childKey = child.key.substring(child.key.lastIndexOf("/")+1);
+            returnNode[nodeKey][childKey] = child.value;
+        }
+    }
+    // FIXME - this is for testing
+    returnNode = nodesJsonToArray(returnNode);
+    return returnNode;
+  }
+
+  function nodesJsonToArray(nodesJson) {
+    var simples = null;
+    if (typeof nodesJson == 'object') {
+        simples = nodesJson;
+    } else {
+        simples = JSON.parse(nodesJson);
+    }
+    var item = {
+      key: Object.keys(simples)[0],
+      dir: true,
+      nodes: []
+    }
+    for (var node in simples) {
+        var child = simples[node];
+        if (typeof child == 'string') {
+          item.nodes.push({
+            key: node,
+            value: child
+          })
+        } else {
+          item.nodes.push(nodesJsonToArray(child));
+        }
+
+    }
+    return item;
   }
 
   $scope.loadStats = function(){
