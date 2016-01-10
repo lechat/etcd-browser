@@ -57,28 +57,33 @@
         <span class="glyphicon glyphicon-hourglass"></span>
       </button>
     </div>
-    <div class="btn-group" ng-if="node.key == activeNode.key && !loading">
-      <button ng-if="node.open" ng-click="createDir(node)" class="btn btn-default btn-xs" type="button" title="Create Directory">
-        <span class="glyphicon glyphicon-plus"></span>
-      </button>
-      <button ng-if="node.open" ng-click="copyDir(node)" class="btn btn-default btn-xs" type="button" title="Copy Directory">
-        <span class="glyphicon glyphicon-floppy-open"></span>
-      </button>
-    </div>
-    <div class="btn-group" ng-if="node.key == activeNode.key && !loading">
-      <button ng-if="node.open" ng-click="setRoot()" class="btn btn-default btn-xs" type="button" title="Set as root node">
-        <span class="glyphicon glyphicon-log-out"></span>
-      </button>
-      <button ng-if="node.open" ng-click="resetRoot()"
-       class="btn btn-default btn-xs" type="button" title="Reset root node">
-        <span class="glyphicon glyphicon-log-in"></span>
-      </button>
-    </div>
-    <div class="btn-group" ng-if="node.key == activeNode.key && !loading">
-      <button ng-if="node.open" type="button" class="btn btn-warning btn-xs" ng-click="deleteDir(node)" title="Delete Directory">
-        <span class="glyphicon glyphicon-trash"></span>
-      </button>
-    </div>
+    <span ng-if="node.key == activeNode.key && !loading">
+      <div class="btn-group">
+        <button ng-if="node.open" ng-click="createDir(node)" class="btn btn-default btn-xs" type="button" title="Create Directory">
+          <span class="glyphicon glyphicon-plus"></span>
+        </button>
+        <button ng-if="node.open" ng-click="copyDir(node)" class="btn btn-default btn-xs" type="button" title="Copy Directory">
+          <span class="glyphicon glyphicon-floppy-open"></span>
+        </button>
+        <button ng-if="node.open" ng-click="renameDir(node)" class="btn btn-default btn-xs" type="button" title="Rename Directory">
+          <span class="glyphicon glyphicon-random"></span>
+        </button>
+      </div>
+      <div class="btn-group">
+        <button ng-if="node.open" ng-click="setRoot()" class="btn btn-default btn-xs" type="button" title="Set as root node">
+          <span class="glyphicon glyphicon-log-out"></span>
+        </button>
+        <button ng-if="node.open" ng-click="resetRoot()"
+         class="btn btn-default btn-xs" type="button" title="Reset root node">
+          <span class="glyphicon glyphicon-log-in"></span>
+        </button>
+      </div>
+      <div class="btn-group">
+        <button ng-if="node.open" type="button" class="btn btn-warning btn-xs" ng-click="deleteDir(node)" title="Delete Directory">
+          <span class="glyphicon glyphicon-trash"></span>
+        </button>
+      </div>
+    </span>
     <ul >
       <li ng-repeat="node in node.nodes | orderBy:'name'"
        ng-include="'tree-item'" ng-if="node.dir"
@@ -87,30 +92,7 @@
   </script>
 
   <div class="container-fluid" role="main" ng-controller="NodeCtrl">
-    <!-- <div pageslide class="container" -->
-    <!--  ps-open="slideOpen" ps-side="top" ps-push="true" -->
-    <!--  ps-size="34px"> -->
-    <!--   <div class="row"> -->
-    <!--     <div class="col-md-9"> -->
-    <!--       <form ng-submit="submit()"> -->
-    <!--         <div class="input-group" ng-submit="submit()"> -->
-    <!--           <input type="text" class="form-control" ng-model="urlPrefix" placeholder="http://localhost:8000"> -->
-    <!--           <span class="input-group-btn"> -->
-    <!--               <button class="btn btn-default" type="submit">Set root</button> -->
-    <!--               <button class="btn btn-info" type="button" ng-click="resetRoot()">Reset root</button> -->
-    <!--           </span> -->
-    <!--         </div> -->
-    <!--       </form> -->
-    <!--     </div> -->
-    <!-- </div> -->
-
-<!--       <div class="col-md-3" style="margin-top:8px"> -->
-<!--         <input type="checkbox" ng-model="checkboxModel.use_json_validation"> -->
-<!--         <span style="padding-left:5px">validate values to JSON format</span> -->
-<!--       </div> -->
-<!--     </div> -->
-
-    <div class="row" ng-if="error">
+    <div class="row" ng-if="error" ng-cloak>
       <div class="col-md-6 col-md-offset-3">
         <div class="alert alert-danger alert-dismissible alert-tiny" role="alert">
           {{error}}

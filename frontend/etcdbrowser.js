@@ -272,30 +272,53 @@ app.controller('NodeCtrl', [
     );
   }
 
-  $scope.copyDirAux = function(source, target){
-    $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + source.key}).
-      success(function(data) {
-        prepNodes(data.node.nodes, source);
+  $scope.copyDirAux = function(source, target, rename, deferred){
+    var deferred = deferred || false;
+    if (!deferred) {
+      deferred = $q.defer();
+    }
 
-        var url = $scope.getPrefix() + keyPrefix + target + source.name;
-        $http({
-          method: 'PUT', url: url,
-          params: {"dir": true}}).error(errorHandler);
-
-        source.nodes = data.node.nodes;
+    var verifyUrl = $scope.getPrefix() + keyPrefix + source.key;
+    $http({method: 'GET', url: verifyUrl})
+    .then(function(data) {
+        console.log('Called verifyUrl: ' + verifyUrl);
         if ('nodes' in source && typeof source.nodes !== 'undefined') {
-          source.nodes.forEach(function (child) {
-            if (child.dir) {
-              $scope.copyDirAux(child, target + source.name + "/");
-            } else {
-              var url = $scope.getPrefix() + keyPrefix + target + source.name + '/' + child.name;
-              $http({
-                method: 'PUT', url: url,
-                params: {"value": child.value}}).error(errorHandler);
-            }
-          })
+          prepNodes(data.node.nodes, source);
         }
-      }).error(errorHandler);
+
+        var inPlace = rename || false;
+        if (!inPlace) {
+          var url = $scope.getPrefix() + keyPrefix + target + source.name;
+        } else {
+          var url = $scope.getPrefix() + keyPrefix + target;
+        }
+        $http({method: 'PUT', url: url, params: {"dir": true}})
+        .then(function(ignored){
+          if ('nodes' in data && typeof data.nodes !== 'undefined') {
+            source.nodes = data.node.nodes;
+            source.nodes.forEach(function (child) {
+              if (child.dir) {
+                if (!inPlace) {
+                  $scope.copyDirAux(child, target + source.name + "/", inPlace, deferred);
+                } else {
+                  $scope.copyDirAux(child, target + child.name + "/", inPlace, deferred);
+                }
+              } else {
+                if (!inPlace) {
+                  var url = $scope.getPrefix() + keyPrefix + target + source.name + '/' + child.name;
+                } else {
+                  var url = $scope.getPrefix() + keyPrefix + target + child.name;
+                }
+                $http({
+                  method: 'PUT', url: url,
+                  params: {"value": child.value}})
+                .then((), errorHandler);
+              }
+            })
+          }
+        },errorHandler());
+      },errorHandler());
+      return deferred.promise;
   }
 
   $scope.copyDir = function(node){
@@ -324,22 +347,22 @@ app.controller('NodeCtrl', [
   // TODO: handle move
   $scope.copyDirDrop = function(event, source, target){
     return $scope.modalNewItem({
-        title: 'Copy Node from ' + source.key,
+        title: 'copy node from ' + source.key,
         firstInput: {
-            label: 'To',
+            label: 'to',
             value: target.key
         },
         secondInput: {},
         isDir: true,
         node: source
     }, function() {
-        var dirName = $scope.new_item.firstInput.value;
+        var dirname = $scope.new_item.firstInput.value;
         var node = $scope.new_item.node;
 
-        if(!dirName || dirName == "") return;
+        if(!dirname || dirname == "") return;
 
-        dirName = $scope.formatDir(dirName);
-        $scope.copyDirAux(node, dirName)
+        dirname = $scope.formatDir(dirname);
+        $scope.copyDirAux(node, dirname)
 
         $scope.loadNode(target);
         $scope.setActiveNode(target);
@@ -347,8 +370,37 @@ app.controller('NodeCtrl', [
     );
   }
 
-  $scope.deleteDir = function(node) {
-    if(!confirm("Are you sure you want to delete " + node.key)) return;
+  $scope.renameDir = function(node){
+    return $scope.modalNewItem({
+        title: 'Rename node from ' + node.key,
+        firstInput: {
+            label: 'to',
+            value: node.key
+        },
+        secondInput: {},
+        isDir: true,
+        node: node
+    }, function() {
+        var target = $scope.new_item.firstInput.value;
+        var node = $scope.new_item.node;
+
+        if(!target || target == "") return;
+
+        target = $scope.formatDir(target);
+        $scope.copyDirAux(node, target, true)
+
+        $scope.deleteDir(node, true);
+
+        $scope.loadNode(target);
+        $scope.setActiveNode(target);
+      }
+    );
+  }
+
+  $scope.deleteDir = function(node, dontAsk) {
+    if (typeof dontAsk == 'undefined') {
+      if(!confirm("Are you sure you want to delete " + node.key)) return;
+    }
     $http({method: 'DELETE',
       url: $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"}).
     success(function(data) {
@@ -364,7 +416,8 @@ app.controller('NodeCtrl', [
     return dirName;
   }
 
-  $scope.$watch('$viewContentLoaded', $scope.submit());
+  angular.element(document).ready($scope.submit());
+  // $scope.$watch('$viewContentLoaded', $scope.submit());
   // $scope.submit();
 
   function prepNodes(nodes, parent){
