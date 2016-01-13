@@ -6,9 +6,26 @@ var app = angular.module("app", [
     "pageslide-directive"
 ]);
 
+app.factory('AsyncRename', function ($q, $http) {
+  var rename = function(url, params) {
+    var deferred = $q.defer();
+
+    $http({method: 'PUT', url: url, params: params})
+    .then(function() {
+      deferred.resolve();
+    })
+
+    return deferred.promise;
+  }
+
+  return {
+    rename: rename
+  };
+});
+
 app.controller('NodeCtrl', [
-        '$scope','$http','$location','$q', '$uibModal', '$log',
-        function($scope,$http,$location,$q, $uibModal, $log) {
+        '$scope', '$http', '$location', '$q', '$uibModal', '$log', 'AsyncRename',
+        function($scope, $http, $location, $q, $uibModal, $log, AsyncRename) {
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
@@ -272,12 +289,25 @@ app.controller('NodeCtrl', [
     );
   }
 
-  $scope.copyDirAux = function(source, target, rename, deferred){
-    var deferred = deferred || false;
-    if (!deferred) {
-      deferred = $q.defer();
+  $scope.renameDirAsync = function(source, target) {
+    source.name = source.key.substring(source.key.lastIndexOf("/")+1);
+    var url = $scope.getPrefix() + keyPrefix + target + source.name;
+    if (angular.isDefined(source.dir) && source.dir) {
+        var param = {dir: true};
+    } else {
+        var param = {value: source.value};
     }
+    return AsyncRename.rename(url, param)
+    .then(function () {
+        if (angular.isDefined(source.nodes) && source.nodes.length > 0) {
+          return $q.all(source.nodes.map(function (nd) {
+              return $scope.renameDirAsync(nd, target + source.name + "/");
+          }));
+        }
+    });
+  }
 
+  $scope.copyDirAux = function(source, target, rename, deferred){
     var verifyUrl = $scope.getPrefix() + keyPrefix + source.key;
     $http({method: 'GET', url: verifyUrl})
     .then(function(data) {
@@ -311,14 +341,12 @@ app.controller('NodeCtrl', [
                 }
                 $http({
                   method: 'PUT', url: url,
-                  params: {"value": child.value}})
-                .then((), errorHandler);
+                  params: {"value": child.value}});
               }
             })
           }
         },errorHandler());
       },errorHandler());
-      return deferred.promise;
   }
 
   $scope.copyDir = function(node){
@@ -362,7 +390,7 @@ app.controller('NodeCtrl', [
         if(!dirname || dirname == "") return;
 
         dirname = $scope.formatDir(dirname);
-        $scope.copyDirAux(node, dirname)
+        $scope.copyDirAux(node, dirname);
 
         $scope.loadNode(target);
         $scope.setActiveNode(target);
@@ -381,18 +409,28 @@ app.controller('NodeCtrl', [
         isDir: true,
         node: node
     }, function() {
-        var target = $scope.new_item.firstInput.value;
-        var node = $scope.new_item.node;
+      var target = $scope.new_item.firstInput.value;
+      var node = $scope.new_item.node;
 
-        if(!target || target == "") return;
+      if(!target || target == "") return;
 
-        target = $scope.formatDir(target);
-        $scope.copyDirAux(node, target, true)
+      target = $scope.formatDir(target);
+      var url = $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"
+    // something/bar
+    // something/bar/abc
+    //
+    // something/bar2/bar
+    // something/bar2/abc
+      $http({method: 'GET', url: url})
+      .then(function (wholeTree){
+        return $scope.renameDirAsync(wholeTree.data.node, target)
+        .then(function() {
+          $scope.deleteDir(node, true);
+        });
+      })
 
-        $scope.deleteDir(node, true);
-
-        $scope.loadNode(target);
-        $scope.setActiveNode(target);
+      $scope.loadNode(target);
+      $scope.setActiveNode(target);
       }
     );
   }
