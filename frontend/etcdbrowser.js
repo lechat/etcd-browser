@@ -434,6 +434,32 @@ app.controller('NodeCtrl', [
     });
   }
 
+  $scope.renameDirInPlace = function(node, target){
+    if(!target || target == "") return;
+
+    if (target == node.name) {
+       return;
+    }
+
+    var new_node = angular.copy(node);
+    new_node.name = target
+    new_node.key = node.key.replace(node.name, target)
+    new_node.parent.open = false;
+
+    var url = $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"
+    $http({method: 'GET', url: url})
+    .then(function (wholeTree){
+      return $scope.renameDirAsync(wholeTree.data.node, node.name, target)
+      .then(function() {
+        $scope.deleteDir(node, true);
+        // $scope.loadNode(new_node);
+        $scope.activeNode = new_node;
+        $scope.toggleNode(new_node.parent);
+      });
+    });
+    return false;
+  }
+
   $scope.deleteDir = function(node, dontAsk) {
     if (typeof dontAsk == 'undefined') {
       if(!confirm("Are you sure you want to delete " + node.key)) return;
@@ -453,21 +479,14 @@ app.controller('NodeCtrl', [
     return dirName;
   }
 
-  angular.element(document).ready($scope.submit());
-  // $scope.$watch('$viewContentLoaded', $scope.submit());
-  // $scope.submit();
+  $scope.submit();
 
   function prepNodes(nodes, parent){
     for(var key in nodes){
       var node = nodes[key];
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
       node.name = name;
-      node.parent = {
-          key: parent.key,
-          name: parent.name,
-          dir: true,
-          nodes: []
-      }
+      node.parent = parent;
     }
   }
 

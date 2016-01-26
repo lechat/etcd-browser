@@ -50,6 +50,10 @@
       ng-if="node.dir"
       ui-draggable="true"
       drag="node"
+      editable-text="node.name"
+      e-form="textBtnForm"
+      onbeforesave="renameDirInPlace(node, $data)"
+      ng-dblclick="textBtnForm.$show()"
       ui-on-drop="copyDirDrop($event, $data, node)"
       class="{{node.key == activeNode.key ? 'active-node' : ''}}">{{node.name}}</a>
     <div class="btn-group" ng-if="node.key == activeNode.key && loading">
