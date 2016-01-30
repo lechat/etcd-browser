@@ -6,8 +6,8 @@ var app = angular.module("app", [
     "pageslide-directive"
 ]);
 
-app.factory('AsyncRename', function ($q, $http) {
-  var rename = function(url, params) {
+app.factory('AsyncPut', function ($q, $http) {
+  var put = function(url, params) {
     var deferred = $q.defer();
 
     console.debug(url);
@@ -20,13 +20,13 @@ app.factory('AsyncRename', function ($q, $http) {
   }
 
   return {
-    rename: rename
+    put: put
   };
 });
 
 app.controller('NodeCtrl', [
-        '$scope', '$http', '$location', '$q', '$uibModal', '$log', 'AsyncRename',
-        function($scope, $http, $location, $q, $uibModal, $log, AsyncRename) {
+        '$scope', '$http', '$location', '$q', '$uibModal', '$log', 'AsyncPut',
+        function($scope, $http, $location, $q, $uibModal, $log, AsyncPut) {
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
@@ -299,7 +299,7 @@ app.controller('NodeCtrl', [
     } else {
         var param = {value: source.value};
     }
-    return AsyncRename.rename(url, param)
+    return AsyncPut.put(url, param)
     .then(function () {
         if (angular.isDefined(source.nodes) && source.nodes.length > 0) {
           return $q.all(source.nodes.map(function (child) {
@@ -309,46 +309,27 @@ app.controller('NodeCtrl', [
     });
   }
 
-  $scope.copyDirAux = function(source, target, rename, deferred){
-    var verifyUrl = $scope.getPrefix() + keyPrefix + source.key;
-    $http({method: 'GET', url: verifyUrl})
-    .then(function(data) {
-        console.log('Called verifyUrl: ' + verifyUrl);
-        if ('nodes' in source && typeof source.nodes !== 'undefined') {
-          prepNodes(data.node.nodes, source);
-        }
+  $scope.copyDirAux = function(source, target){
+    source.name = source.key.substring(source.key.lastIndexOf("/")+1);
+    if (target.substr(target.trim().length - 1) != '/') {
+      target += '/';
+    }
+    var url = $scope.getPrefix() + keyPrefix + target + source.name;
 
-        var inPlace = rename || false;
-        if (!inPlace) {
-          var url = $scope.getPrefix() + keyPrefix + target + source.name;
-        } else {
-          var url = $scope.getPrefix() + keyPrefix + target;
+    if (angular.isDefined(source.dir) && source.dir) {
+        var param = {dir: true};
+    } else {
+        var param = {value: source.value};
+    }
+    return AsyncPut.put(url, param)
+    .then(function(){
+        if (angular.isDefined(source.nodes) && source.nodes.length > 0) {
+          return $q.all(source.nodes.map(function (child) {
+              console.log('copyDirAux(chilld=' + child.key + ', target=' + target + source.name + ')')
+              return $scope.copyDirAux(child, target + source.name);
+          }));
         }
-        $http({method: 'PUT', url: url, params: {"dir": true}})
-        .then(function(ignored){
-          if ('nodes' in data && typeof data.nodes !== 'undefined') {
-            source.nodes = data.node.nodes;
-            source.nodes.forEach(function (child) {
-              if (child.dir) {
-                if (!inPlace) {
-                  $scope.copyDirAux(child, target + source.name + "/", inPlace, deferred);
-                } else {
-                  $scope.copyDirAux(child, target + child.name + "/", inPlace, deferred);
-                }
-              } else {
-                if (!inPlace) {
-                  var url = $scope.getPrefix() + keyPrefix + target + source.name + '/' + child.name;
-                } else {
-                  var url = $scope.getPrefix() + keyPrefix + target + child.name;
-                }
-                $http({
-                  method: 'PUT', url: url,
-                  params: {"value": child.value}});
-              }
-            })
-          }
-        },errorHandler());
-      },errorHandler());
+    });
   }
 
   $scope.copyDir = function(node){
@@ -367,8 +348,10 @@ app.controller('NodeCtrl', [
 
         if(!dirName || dirName == "") return;
 
-        dirName = $scope.formatDir(dirName);
         $scope.copyDirAux(node, dirName)
+        then(function (){
+            $scope.setActiveNode()
+        });
       }
     );
   }
@@ -376,28 +359,19 @@ app.controller('NodeCtrl', [
   // TODO: handle old style - merge on copy
   // TODO: handle move
   $scope.copyDirDrop = function(event, source, target){
-    return $scope.modalNewItem({
-        title: 'copy node from ' + source.key,
-        firstInput: {
-            label: 'to',
-            value: target.key
-        },
-        secondInput: {},
-        isDir: true,
-        node: source
-    }, function() {
-        var dirname = $scope.new_item.firstInput.value;
-        var node = $scope.new_item.node;
+    var dirname = target.key;
 
-        if(!dirname || dirname == "") return;
+    if(!dirname || dirname == "") return;
 
-        dirname = $scope.formatDir(dirname);
-        $scope.copyDirAux(node, dirname);
-
-        $scope.loadNode(target);
-        $scope.setActiveNode(target);
-      }
-    );
+    dirname = $scope.formatDir(dirname);
+    var verifyUrl = $scope.getPrefix() + keyPrefix + source.key + "?dir=true&recursive=true";
+    $http({method: 'GET', url: verifyUrl})
+    .then(function(http_data) {
+        $scope.copyDirAux(http_data.data.node, dirname)
+        .then(function() {
+          $scope.setActiveNode(target);
+        });
+    });
   }
 
   $scope.renameDir = function(node){
@@ -446,7 +420,7 @@ app.controller('NodeCtrl', [
     new_node.key = node.key.replace(node.name, target)
     new_node.parent.open = false;
 
-    var url = $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"
+    var url = $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true";
     $http({method: 'GET', url: url})
     .then(function (wholeTree){
       return $scope.renameDirAsync(wholeTree.data.node, node.name, target)
@@ -466,10 +440,9 @@ app.controller('NodeCtrl', [
     }
     $http({method: 'DELETE',
       url: $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"}).
-    success(function(data) {
+    then(function(data) {
       $scope.loadNode(node.parent);
-    }).
-    error(errorHandler);
+    });
   }
 
   $scope.formatDir = function(dirName){
@@ -486,7 +459,10 @@ app.controller('NodeCtrl', [
       var node = nodes[key];
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
       node.name = name;
-      node.parent = parent;
+      node.parent = {
+        name: parent.name,
+        key: parent.key
+      }
     }
   }
 
