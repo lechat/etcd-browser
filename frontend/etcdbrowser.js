@@ -3,7 +3,8 @@ var app = angular.module("app", [
     "mc.resizer",
     "ui.bootstrap",
     "ang-drag-drop",
-    "pageslide-directive"
+    "pageslide-directive",
+    "blockUI"
 ]);
 
 app.factory('AsyncPut', function ($q, $http) {
@@ -25,8 +26,8 @@ app.factory('AsyncPut', function ($q, $http) {
 });
 
 app.controller('NodeCtrl', [
-        '$scope', '$http', '$location', '$q', '$uibModal', '$log', 'AsyncPut',
-        function($scope, $http, $location, $q, $uibModal, $log, AsyncPut) {
+        '$scope', '$http', '$location', '$q', '$uibModal', '$log', 'AsyncPut', '$timeout', 'blockUI',
+        function($scope, $http, $location, $q, $uibModal, $log, AsyncPut, $timeout, blockUI) {
   var keyPrefix = '/v2/keys',
       statsPrefix = '/v2/stats';
 
@@ -56,8 +57,10 @@ app.controller('NodeCtrl', [
   $scope.setActiveNode = function(node) {
     $scope.activeNode = node;
     if (node.open) {
+      console.log('setActiveNode node open')
       $scope.loadNode(node);
     } else {
+      console.log('setActiveNode node closed')
       $scope.toggleNode(node);
     }
   }
@@ -80,21 +83,34 @@ app.controller('NodeCtrl', [
   }
 
   $scope.loadNode = function(node){
+    console.log('enter: scope.loadNode ' + node.key);
     delete $scope.error;
     $scope.loading = true;
     var url = $scope.getPrefix() + keyPrefix + node.key;
-    $http({method: 'GET', url: url}).
-      success(function(data) {
-        if (! angular.isDefined(data.node)) {
-            keyErrorHandler(data, url);
-        } else {
-            prepNodes(data.node.nodes, node);
-            node.nodes = data.node.nodes;
-            $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key
-        }
-        $scope.loading = false;
-      }).
-      error(errorHandler);
+    $http({method: 'GET', url: url})
+    .then(function(http_data) {
+        $timeout(function() {
+            console.log('then: scope.loadNode ' + node.key);
+            var data = http_data.data;
+            if (! angular.isDefined(data.node)) {
+                keyErrorHandler(data, url);
+            } else {
+                prepNodes(data.node.nodes, node);
+                node.nodes = data.node.nodes;
+                $scope.urlPrefix = $scope.getPrefix() + keyPrefix + node.key
+            }
+            var root = $scope.root;
+            var tree_node = findNode(root, node.key);
+            console.log('loadNode findNode');
+            console.log(tree_node);
+
+            $scope.loading = false;
+            $scope.$apply(function (){
+                $scope.root = root;
+            });
+        });
+      });
+    console.log('exit: scope.loadNode ' + node.key);
   }
 
   $scope.toggleNode = function(node) {
@@ -249,7 +265,7 @@ app.controller('NodeCtrl', [
   $scope.deleteNode = function(node){
     $http({method: 'DELETE', url: $scope.getPrefix() + keyPrefix + node.key}).
     success(function(data) {
-      $scope.loadNode(node.parent);
+      $scope.setActiveNode(node.parent);
     }).
     error(errorHandler);
   }
@@ -349,8 +365,8 @@ app.controller('NodeCtrl', [
         if(!dirName || dirName == "") return;
 
         $scope.copyDirAux(node, dirName)
-        then(function (){
-            $scope.setActiveNode()
+        .then(function (){
+            $scope.setActiveNode(node.parent);
         });
       }
     );
@@ -363,6 +379,7 @@ app.controller('NodeCtrl', [
 
     if(!dirname || dirname == "") return;
 
+    blockUI.start("Moving trees...");
     dirname = $scope.formatDir(dirname);
     var verifyUrl = $scope.getPrefix() + keyPrefix + source.key + "?dir=true&recursive=true";
     $http({method: 'GET', url: verifyUrl})
@@ -370,6 +387,9 @@ app.controller('NodeCtrl', [
         $scope.copyDirAux(http_data.data.node, dirname)
         .then(function() {
           $scope.setActiveNode(target);
+          $scope.$apply(function () {
+            blockUI.stop();
+          });
         });
     });
   }
@@ -423,14 +443,22 @@ app.controller('NodeCtrl', [
     var url = $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true";
     $http({method: 'GET', url: url})
     .then(function (wholeTree){
-      return $scope.renameDirAsync(wholeTree.data.node, node.name, target)
+      console.log('renameDirInPlace before renameDirAsync')
+      $scope.renameDirAsync(wholeTree.data.node, node.name, target)
       .then(function() {
+        console.log('renameDirInPlace in then.renameDirAsync')
         $scope.deleteDir(node, true);
-        // $scope.loadNode(new_node);
-        $scope.activeNode = new_node;
-        $scope.toggleNode(new_node.parent);
+        console.log('renameDirInPlace old dir deleted')
+        $scope.loadNode(new_node.parent);
+        $scope.setActiveNode(new_node.parent);
+        // $scope.apply(function() {
+        //     $scope.activeNode = new_node.parent;
+        // });
+        console.log('renameDirInPlace after setActiveNode')
+        // $scope.toggleNode(new_node.parent);
       });
     });
+    console.log('renameDirInPlace exit')
     return false;
   }
 
@@ -439,9 +467,9 @@ app.controller('NodeCtrl', [
       if(!confirm("Are you sure you want to delete " + node.key)) return;
     }
     $http({method: 'DELETE',
-      url: $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"}).
-    then(function(data) {
-      $scope.loadNode(node.parent);
+      url: $scope.getPrefix() + keyPrefix + node.key + "?dir=true&recursive=true"})
+    .then(function(data) {
+      $scope.setActiveNode(node.parent);
     });
   }
 
@@ -461,9 +489,26 @@ app.controller('NodeCtrl', [
       node.name = name;
       node.parent = {
         name: parent.name,
-        key: parent.key
+        key: parent.key,
+        open: parent.open
       }
     }
+  }
+
+  function findNode(root_node, key) {
+    if (root_node.key == key) {
+      return root_node;
+    }
+    if (!angular.isDefined(root_node.nodes)) {
+      return null;
+    }
+    root_node.nodes.forEach(function(node) {
+      var found_node = findNode(node, key);
+      if (found_node != null) {
+        return found_node;
+      }
+    });
+    return null;
   }
 
   $scope.loadStats = function(){
