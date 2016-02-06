@@ -26,6 +26,7 @@
     "angular-xeditable": "~0.1.9",
     "angular-ui": "~0.4.0",
     "angular-bootstrap": "~0.14.3",
-    "angular-pageslide-directive": "~1.0.8"
+    "angular-pageslide-directive": "~1.0.8",
+    "angular-block-ui": "~0.2.2"
   }
 }
