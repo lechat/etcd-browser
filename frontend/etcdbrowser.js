@@ -372,12 +372,7 @@ app.controller('NodeCtrl', [
       var node = nodes[key];
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
       node.name = name;
-      node.parent = {
-          key: parent.key,
-          name: parent.name,
-          dir: true,
-          nodes: []
-      }
+      node.parent = parent;
     }
   }
 
