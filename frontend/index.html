@@ -49,7 +49,7 @@
       ng-click="setActiveNode(node)"
       ng-if="node.dir"
       ui-draggable="true"
-      drag="node"
+      drag="node.key"
       editable-text="node.name"
       e-form="textBtnForm"
       onbeforesave="renameDirInPlace(node, $data)"

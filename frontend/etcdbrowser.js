@@ -358,13 +358,13 @@ app.controller('NodeCtrl', [
 
   // TODO: handle old style - merge on copy
   // TODO: handle move
-  $scope.copyDirDrop = function(event, source, target){
+  $scope.copyDirDrop = function(event, source_key, target){
     var dirname = target.key;
 
     if(!dirname || dirname == "") return;
 
     dirname = $scope.formatDir(dirname);
-    var verifyUrl = $scope.getPrefix() + keyPrefix + source.key + "?dir=true&recursive=true";
+    var verifyUrl = $scope.getPrefix() + keyPrefix + source_key + "?dir=true&recursive=true";
     $http({method: 'GET', url: verifyUrl})
     .then(function(http_data) {
         $scope.copyDirAux(http_data.data.node, dirname)
@@ -459,10 +459,7 @@ app.controller('NodeCtrl', [
       var node = nodes[key];
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
       node.name = name;
-      node.parent = {
-        name: parent.name,
-        key: parent.key
-      }
+      node.parent = parent;
     }
   }
 
